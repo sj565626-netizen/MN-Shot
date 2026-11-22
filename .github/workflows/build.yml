@@ -1,53 +1,46 @@
 name: Build MN Shot APK
-
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract MN Shot
-        run: unzip -q MN_Shot_Studio_v1.zip
-
-      - name: Setup Java
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+
+      - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Point Gradle to SDK
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-      - name: Accept SDK licenses
-        run: yes | sdkmanager --licenses || true
+      - name: Check editor JavaScript syntax
+        run: node --check app/src/main/assets/app.js
 
-      - name: Install Android SDK
-        run: |
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Check JavaScript
-        run: node --check MN_Shot_Studio/app/src/main/assets/app.js
-
-      - name: Build APK
-        working-directory: MN_Shot_Studio
+      - name: Build debug APK
         run: gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MN-Shot-debug-apk
-          path: MN_Shot_Studio/app/build/outputs/apk/debug/app-debug.apk
-          
+          name: MN-Cut-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
