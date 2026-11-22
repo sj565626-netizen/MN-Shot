@@ -1,10 +1,10 @@
-
 name: Build MN Shot APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract project
+      - name: Extract MN Shot
         run: unzip -q MN_Shot_Studio_v1.zip
 
       - name: Setup Java
@@ -30,17 +30,18 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
+
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses || true
 
       - name: Install Android SDK
         run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Check JavaScript
         run: node --check MN_Shot_Studio/app/src/main/assets/app.js
 
-      - name: Build MN Shot APK
+      - name: Build APK
         working-directory: MN_Shot_Studio
         run: gradle --no-daemon assembleDebug
 
